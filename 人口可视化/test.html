@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国人口数据可视化分析 | China Population Data Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #1a5276;
+            text-align: center;
+        }
+        .language-switcher {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .language-btn {
+            background: #1a5276;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .language-btn:hover {
+            background: #154360;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .chart-box {
+            width: 48%;
+            min-width: 500px;
+            margin-bottom: 20px;
+        }
+        .full-width {
+            width: 100%;
+        }
+        .data-source {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+            margin-top: 10px;
+        }
+        .note {
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #1a5276;
+        }
+        @media (max-width: 900px) {
+            .chart-box {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-switcher">
+            <button class="language-btn" onclick="switchLanguage('zh')">中文</button>
+            <button class="language-btn" onclick="switchLanguage('en')">English</button>
+        </div>
+        
+        <h1 id="main-title">中国人口数据八种可视化展示(2024)</h1>
+        
+        <div class="note" id="data-note">
+            注：数据来源于国家统计局。1981年及以前人口数据为户籍统计数；1982、1990、2000、2010、2020年数据为当年人口普查数据推算数；其余年份数据为年度人口抽样调查推算数据。
+        </div>
+        
+        <!-- 第一行图表 -->
+        <div class="chart-row">
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2 id="chart1-title">1. 2024年人口性别构成(玫瑰图)</h2>
+                    <div id="roseChart" style="width: 100%; height: 400px;"></div>
+                    <div class="data-source" id="source1">数据来源：国家统计局</div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2 id="chart2-title">2. 2024年城乡人口分布(环形图)</h2>
+                    <canvas id="doughnutChart"></canvas>
+                    <div class="data-source" id="source2">数据来源：国家统计局</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 第二行图表 -->
+        <div class="chart-row">
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2 id="chart3-title">3. 2020年教育水平(雷达图)</h2>
+                    <canvas id="radarChart"></canvas>
+                    <div class="data-source" id="source3">数据来源：国家统计局(2020年人口普查数据)</div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2 id="chart4-title">4. 预期寿命变化(2015-2020)(折线柱状组合图)</h2>
+                    <canvas id="comboChart"></canvas>
+                    <div class="data-source" id="source4">数据来源：国家统计局</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 第三行图表 -->
+        <div class="chart-row">
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2 id="chart5-title">5. 2020年人口年龄构成(旭日图)</h2>
+                    <div id="sunburstChart" style="width: 100%; height: 400px;"></div>
+                    <div class="data-source" id="source5">数据来源：国家统计局(2020年人口普查数据)</div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2 id="chart6-title">6. 2020年民族构成(气泡图)</h2>
+                    <canvas id="bubbleChart"></canvas>
+                    <div class="data-source" id="source6">数据来源：国家统计局(2020年人口普查数据)</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 第四行图表 -->
+        <div class="chart-row">
+            <div class="chart-box full-width">
+                <div class="chart-container">
+                    <h2 id="chart7-title">7. 2020年人口金字塔(对称条形图)</h2>
+                    <div id="pyramidChart" style="width: 100%; height: 500px;"></div>
+                    <div class="data-source" id="source7">数据来源：国家统计局(2020年人口普查数据)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-row">
+            <div class="chart-box full-width">
+                <div class="chart-container">
+                    <h2 id="chart8-title">8. 人口变化趋势(面积图)</h2>
+                    <div id="areaChart" style="width: 100%; height: 400px;"></div>
+                    <div class="data-source" id="source8">数据来源：国家统计局</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 语言切换功能
+        const translations = {
+            zh: {
+                mainTitle: "中国人口数据八种可视化展示(2024)",
+                dataNote: "注：数据来源于国家统计局。1981年及以前人口数据为户籍统计数；1982、1990、2000、2010、2020年数据为当年人口普查数据推算数；其余年份数据为年度人口抽样调查推算数据。",
+                chartTitles: [
+                    "1. 2024年人口性别构成(玫瑰图)",
+                    "2. 2024年城乡人口分布(环形图)",
+                    "3. 2020年教育水平(雷达图)",
+                    "4. 预期寿命变化(2015-2020)(折线柱状组合图)",
+                    "5. 2020年人口年龄构成(旭日图)",
+                    "6. 2020年民族构成(气泡图)",
+                    "7. 2020年人口金字塔(对称条形图)",
+                    "8. 人口变化趋势(面积图)"
+                ],
+                dataSources: [
+                    "数据来源：国家统计局",
+                    "数据来源：国家统计局",
+                    "数据来源：国家统计局(2020年人口普查数据)",
+                    "数据来源：国家统计局",
+                    "数据来源：国家统计局(2020年人口普查数据)",
+                    "数据来源：国家统计局(2020年人口普查数据)",
+                    "数据来源：国家统计局(2020年人口普查数据)",
+                    "数据来源：国家统计局"
+                ],
+                genderLabels: ["男性人口", "女性人口"],
+                urbanRuralLabels: ["城镇人口", "乡村人口"],
+                educationLabels: ["大专及以上", "高中和中专", "初中", "小学", "文盲"],
+                lifeExpectancyLabels: ["总体", "男性", "女性"],
+                ethnicLabels: ["汉族", "少数民族"],
+                ageGroupLabels: ["0-14岁", "15-64岁", "65岁及以上"],
+                trendLabels: ["总人口", "城镇人口", "乡村人口"],
+                years: ["2015", "2020", "2024"],
+                populationUnit: "人口(万人)",
+                percentageUnit: "比例(%)",
+                educationUnit: "每十万人中受教育人口数",
+                lifeExpectancyUnit: "预期寿命(岁)"
+            },
+            en: {
+                mainTitle: "China Population Data Visualization (2024)",
+                dataNote: "Note: Data source is National Bureau of Statistics. Population data before 1981 are household registration statistics; data for 1982, 1990, 2000, 2010 and 2020 are estimates based on census data; data for other years are estimates from annual population sample surveys.",
+                chartTitles: [
+                    "1. 2024 Gender Composition (Rose Chart)",
+                    "2. 2024 Urban-Rural Distribution (Doughnut Chart)",
+                    "3. 2020 Education Level (Radar Chart)",
+                    "4. Life Expectancy Change (2015-2020) (Combo Chart)",
+                    "5. 2020 Age Structure (Sunburst Chart)",
+                    "6. 2020 Ethnic Composition (Bubble Chart)",
+                    "7. 2020 Population Pyramid (Bar Chart)",
+                    "8. Population Trend (Area Chart)"
+                ],
+                dataSources: [
+                    "Source: National Bureau of Statistics",
+                    "Source: National Bureau of Statistics",
+                    "Source: National Bureau of Statistics (2020 Census)",
+                    "Source: National Bureau of Statistics",
+                    "Source: National Bureau of Statistics (2020 Census)",
+                    "Source: National Bureau of Statistics (2020 Census)",
+                    "Source: National Bureau of Statistics (2020 Census)",
+                    "Source: National Bureau of Statistics"
+                ],
+                genderLabels: ["Male", "Female"],
+                urbanRuralLabels: ["Urban", "Rural"],
+                educationLabels: ["College+", "High School", "Middle School", "Primary School", "Illiterate"],
+                lifeExpectancyLabels: ["Overall", "Male", "Female"],
+                ethnicLabels: ["Han", "Minorities"],
+                ageGroupLabels: ["0-14", "15-64", "65+"],
+                trendLabels: ["Total", "Urban", "Rural"],
+                years: ["2015", "2020", "2024"],
+                populationUnit: "Population (10,000)",
+                percentageUnit: "Percentage (%)",
+                educationUnit: "People per 100,000",
+                lifeExpectancyUnit: "Life Expectancy (years)"
+            }
+        };
+
+        let currentLanguage = 'zh';
+        
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            updateTexts();
+            updateCharts();
+        }
+        
+        function updateTexts() {
+            document.getElementById('main-title').textContent = translations[currentLanguage].mainTitle;
+            document.getElementById('data-note').textContent = translations[currentLanguage].dataNote;
+            
+            for (let i = 0; i < 8; i++) {
+                document.getElementById(`chart${i+1}-title`).textContent = translations[currentLanguage].chartTitles[i];
+                document.getElementById(`source${i+1}`).textContent = translations[currentLanguage].dataSources[i];
+            }
+        }
+        
+        function updateCharts() {
+            // 重新渲染所有图表以更新语言
+            renderRoseChart();
+            renderDoughnutChart();
+            renderRadarChart();
+            renderComboChart();
+            renderSunburstChart();
+            renderBubbleChart();
+            renderPyramidChart();
+            renderAreaChart();
+        }
+
+        // 1. 玫瑰图 - 2024年人口性别构成
+        let roseChart;
+        function renderRoseChart() {
+            const chartDom = document.getElementById('roseChart');
+            if (roseChart) {
+                roseChart.dispose();
+            }
+            roseChart = echarts.init(chartDom);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    top: '5%',
+                    left: 'center',
+                    data: translations[currentLanguage].genderLabels
+                },
+                series: [
+                    {
+                        name: currentLanguage === 'zh' ? '人口性别构成' : 'Gender Composition',
+                        type: 'pie',
+                        radius: ['30%', '70%'],
+                        center: ['50%', '60%'],
+                        roseType: 'radius',
+                        itemStyle: {
+                            borderRadius: 8
+                        },
+                        label: {
+                            show: false
+                        },
+                        emphasis: {
+                            label: {
+                                show: true
+                            }
+                        },
+                        data: [
+                            { value: 71909, name: translations[currentLanguage].genderLabels[0] },
+                            { value: 68919, name: translations[currentLanguage].genderLabels[1] }
+                        ]
+                    }
+                ]
+            };
+            
+            roseChart.setOption(option);
+        }
+
+        // 2. 环形图 - 2024年城乡人口分布
+        let doughnutChart;
+        function renderDoughnutChart() {
+            const ctx = document.getElementById('doughnutChart').getContext('2d');
+            if (doughnutChart) {
+                doughnutChart.destroy();
+            }
+            
+            doughnutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: translations[currentLanguage].urbanRuralLabels,
+                    datasets: [{
+                        data: [94350, 46478],
+                        backgroundColor: ['#3498db', '#e74c3c'],
+                        borderWidth: 1,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value}${currentLanguage === 'zh' ? '万人' : ' (10,000)'} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. 雷达图 - 2020年教育水平
+        let radarChart;
+        function renderRadarChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChart) {
+                radarChart.destroy();
+            }
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: translations[currentLanguage].educationLabels,
+                    datasets: [{
+                        label: currentLanguage === 'zh' ? '每十万人中受教育人口数' : 'People per 100,000',
+                        data: [15467, 15088, 34507, 24767, 2675],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 40000,
+                            pointLabels: {
+                                font: {
+                                    size: currentLanguage === 'zh' ? 12 : 10
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}${currentLanguage === 'zh' ? '人' : ''}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. 折线柱状组合图 - 预期寿命变化
+        let comboChart;
+        function renderComboChart() {
+            const ctx = document.getElementById('comboChart').getContext('2d');
+            if (comboChart) {
+                comboChart.destroy();
+            }
+            
+            comboChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: translations[currentLanguage].lifeExpectancyLabels,
+                    datasets: [
+                        {
+                            label: '2015',
+                            type: 'bar',
+                            data: [76.34, 73.64, 79.43],
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '2020',
+                            type: 'line',
+                            data: [77.93, 75.37, 80.88],
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 70,
+                            title: {
+                                display: true,
+                                text: translations[currentLanguage].lifeExpectancyUnit
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label} ${context.parsed.y}${currentLanguage === 'zh' ? '岁' : ' years'}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 5. 旭日图 - 2020年人口年龄构成
+        let sunburstChart;
+        function renderSunburstChart() {
+            const chartDom = document.getElementById('sunburstChart');
+            if (sunburstChart) {
+                sunburstChart.dispose();
+            }
+            sunburstChart = echarts.init(chartDom);
+            
+            const option = {
+                series: {
+                    type: 'sunburst',
+                    data: [
+                        {
+                            name: currentLanguage === 'zh' ? '总人口' : 'Total Population',
+                            children: [
+                                {
+                                    name: translations[currentLanguage].ageGroupLabels[0],
+                                    value: 18.0,
+                                    itemStyle: { color: '#f1c40f' }
+                                },
+                                {
+                                    name: translations[currentLanguage].ageGroupLabels[1],
+                                    value: 68.6,
+                                    itemStyle: { color: '#2ecc71' }
+                                },
+                                {
+                                    name: translations[currentLanguage].ageGroupLabels[2],
+                                    value: 13.5,
+                                    itemStyle: { color: '#9b59b6' }
+                                }
+                            ]
+                        }
+                    ],
+                    radius: [0, '90%'],
+                    label: {
+                        rotate: 'radial',
+                        fontSize: currentLanguage === 'zh' ? 12 : 10
+                    }
+                }
+            };
+            
+            sunburstChart.setOption(option);
+        }
+
+        // 6. 气泡图 - 2020年民族构成
+        let bubbleChart;
+        function renderBubbleChart() {
+            const ctx = document.getElementById('bubbleChart').getContext('2d');
+            if (bubbleChart) {
+                bubbleChart.destroy();
+            }
+            
+            bubbleChart = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [
+                        {
+                            label: translations[currentLanguage].ethnicLabels[0],
+                            data: [{
+                                x: 1,
+                                y: 91.1,
+                                r: 30
+                            }],
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                        },
+                        {
+                            label: translations[currentLanguage].ethnicLabels[1],
+                            data: [{
+                                x: 2,
+                                y: 8.9,
+                                r: 15
+                            }],
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: translations[currentLanguage].percentageUnit
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.y}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 7. 对称条形图 - 2020年人口金字塔
+        let pyramidChart;
+        function renderPyramidChart() {
+            const chartDom = document.getElementById('pyramidChart');
+            if (pyramidChart) {
+                pyramidChart.dispose();
+            }
+            pyramidChart = echarts.init(chartDom);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function(params) {
+                        return params[0].seriesName + '<br/>' + 
+                               params[0].name + ': ' + Math.abs(params[0].value) + '%';
+                    }
+                },
+                legend: {
+                    data: translations[currentLanguage].genderLabels
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    position: 'top',
+                    axisLabel: {
+                        formatter: function(value) {
+                            return Math.abs(value) + '%';
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    axisLine: { show: false },
+                    axisLabel: { show: false },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    data: translations[currentLanguage].ageGroupLabels
+                },
+                series: [
+                    {
+                        name: translations[currentLanguage].genderLabels[0],
+                        type: 'bar',
+                        stack: 'total',
+                        label: {
+                            show: true,
+                            formatter: function(params) {
+                                return Math.abs(params.value) + '%';
+                            },
+                            position: 'left'
+                        },
+                        itemStyle: {
+                            color: '#3498db'
+                        },
+                        data: [-9.2, -34.3, -6.5]
+                    },
+                    {
+                        name: translations[currentLanguage].genderLabels[1],
+                        type: 'bar',
+                        stack: 'total',
+                        label: {
+                            show: true,
+                            formatter: function(params) {
+                                return Math.abs(params.value) + '%';
+                            },
+                            position: 'right'
+                        },
+                        itemStyle: {
+                            color: '#e74c3c'
+                        },
+                        data: [8.8, 34.3, 7.0]
+                    }
+                ]
+            };
+            
+            pyramidChart.setOption(option);
+        }
+
+        // 8. 面积图 - 人口变化趋势
+        let areaChart;
+        function renderAreaChart() {
+            const chartDom = document.getElementById('areaChart');
+            if (areaChart) {
+                areaChart.dispose();
+            }
+            areaChart = echarts.init(chartDom);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: '#6a7985'
+                        }
+                    }
+                },
+                legend: {
+                    data: translations[currentLanguage].trendLabels
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: translations[currentLanguage].years
+                },
+                yAxis: {
+                    type: 'value',
+                    name: translations[currentLanguage].populationUnit
+                },
+                series: [
+                    {
+                        name: translations[currentLanguage].trendLabels[0],
+                        type: 'line',
+                        stack: 'total',
+                        areaStyle: {},
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        data: [137462, 141178, 140828],
+                        itemStyle: {
+                            color: '#3498db'
+                        }
+                    },
+                    {
+                        name: translations[currentLanguage].trendLabels[1],
+                        type: 'line',
+                        stack: 'total',
+                        areaStyle: {},
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        data: [77116, 90199, 94350],
+                        itemStyle: {
+                            color: '#2ecc71'
+                        }
+                    },
+                    {
+                        name: translations[currentLanguage].trendLabels[2],
+                        type: 'line',
+                        stack: 'total',
+                        areaStyle: {},
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        data: [60346, 50979, 46478],
+                        itemStyle: {
+                            color: '#f39c12'
+                        }
+                    }
+                ]
+            };
+            
+            areaChart.setOption(option);
+        }
+
+        // 初始化所有图表
+        function initCharts() {
+            renderRoseChart();
+            renderDoughnutChart();
+            renderRadarChart();
+            renderComboChart();
+            renderSunburstChart();
+            renderBubbleChart();
+            renderPyramidChart();
+            renderAreaChart();
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            updateTexts();
+            initCharts();
+            
+            // 响应式调整
+            window.addEventListener('resize', function() {
+                roseChart.resize();
+                sunburstChart.resize();
+                pyramidChart.resize();
+                areaChart.resize();
+            });
+        });
+    </script>
+</body>
+</html>
