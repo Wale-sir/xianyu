@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- 页面标题和时间 -->
+    <div class="row mb-4">
+        <div class="col-8">
+            <h2 class="text-white">股票市场实时监控与分析平台</h2>
+        </div>
+        <div class="col-4 text-end">
+            <h4 class="text-white" id="currentTime"></h4>
+        </div>
+    </div>
+
+    <!-- 第一行 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <!-- 左侧条形图 -->
+            <div class="dashboard-panel">
+                <h5>股票涨幅排行榜</h5>
+                <div id="leftBarChart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <!-- 中间主要图表 (折线/柱状组合图) -->
+            <div class="dashboard-panel">
+                <h5>市场主要指数表现</h5>
+                <div id="mainCharts" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <!-- 右侧顶部图表 -->
+            <div class="dashboard-panel">
+                <h5>精选涨跌幅个股表现</h5>
+                <div id="topRightChart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 第二行 -->
+    <div class="row">
+        <div class="col-md-4">
+            <!-- 左侧底部图表 -->
+            <div class="dashboard-panel">
+                <h5>行业板块表现</h5>
+                <div id="bottomLeftBarChart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <!-- 中间底部图表 -->
+            <div class="dashboard-panel">
+                <h5>市场关键指标趋势</h5>
+                <div id="bottomLineChart" style="width: 100%; height: 300px;"></div>
+                </div>
+                        </div>
+        <div class="col-md-4">
+            <!-- 右侧底部图表 (饼图/圆环图) -->
+            <div class="dashboard-panel">
+                <h5>股票市值分布</h5>
+                <div id="bottomRightPieChart" style="width: 100%; height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+    <!-- 关键指标区域 (可能需要单独处理或整合到现有布局中) -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="dashboard-panel">
+                 <h5>市场总览</h5>
+                 <div id="keyMetrics" style="width: 100%; height: 100px;"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background-color: #0a163b; /* 深蓝色背景 */
+        color: #fff; /* 白色文字 */
+    }
+    .dashboard-panel {
+        background-color: rgba(255, 255, 255, 0.1); /* 半透明白色背景 */
+        border: 1px solid rgba(255, 255, 255, 0.2); /* 半透明白色边框 */
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .dashboard-panel h5 {
+        color: #00baff; /* 突出标题颜色 */
+        margin-bottom: 15px;
+    }
+    /* 可以根据需要为不同的图表容器添加特定样式 */
+    #topRightTable table {
+        width: 100%;
+        color: #fff;
+        margin-top: 10px;
+        border-collapse: collapse;
+    }
+    #topRightTable th, #topRightTable td {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px;
+        text-align: left;
+    }
+    #topRightTable th {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    .key-metric-item {
+        text-align: center;
+    }
+    .key-metric-item h5 {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+    .key-metric-item p {
+        color: #00baff;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 实时显示当前时间
+    function updateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = ('0' + (now.getMonth() + 1)).slice(-2);
+        const day = ('0' + now.getDate()).slice(-2);
+        const hours = ('0' + now.getHours()).slice(-2);
+        const minutes = ('0' + now.getMinutes()).slice(-2);
+        const seconds = ('0' + now.getSeconds()).slice(-2);
+        document.getElementById('currentTime').textContent = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+    }
+    setInterval(updateTime, 1000);
+    updateTime(); // Initial call
+
+    // ECharts 图表初始化代码将在这里添加
+    
+    // 初始化左侧条形图 (股票涨幅排行榜)
+    function initLeftBarChart(data) {
+        console.log('Initializing left bar chart with data (Top Gainers):', data);
+        const chartDom = document.getElementById('leftBarChart');
+        if (!chartDom) {
+            console.error('Left bar chart container not found!');
+            return;
+        }
+
+        const myChart = echarts.init(chartDom);
+
+        // Use top gainers data
+        const topGainers = data || []; // Assuming data is the array of top gainers
+        const categories = topGainers.map(item => `${item.name} (${item.code})`).reverse();
+        const values = topGainers.map(item => item.change_percent).reverse();
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                },
+                formatter: function (params) {
+                    const dataIndex = params[0].dataIndex;
+                    const item = topGainers.reverse()[dataIndex]; // Get original item before reverse for categories
+                    return `${item.name} (${item.code})<br/>涨幅: ${item.change_percent}%<br/>当前价: ${item.current_price}`;
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '10%', // Adjust right margin for labels
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+                boundaryGap: [0, 0.01],
+                 axisLabel: { color: '#fff', formatter: '{value} %' }, // Add percentage formatter
+                 splitLine: { show: false }
+            },
+            yAxis: {
+                type: 'category',
+                data: categories,
+                axisLabel: {
+                    color: '#fff' // White labels
+                }
+            },
+            series: [
+                {
+                    name: '涨幅',
+                    type: 'bar',
+                    data: values,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{
+                            offset: 0, color: '#00aaff' // Gradient start color
+                        }, {
+                            offset: 1, color: '#0055ff' // Gradient end color
+                        }])
+                    },
+                     label: {
+                        show: true,
+                        position: 'right',
+                        valueAnimation: true,
+                         formatter: '{c}%', // Display percentage on bars
+                        color: '#fff' // White labels
+                    }
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+        console.log('Left bar chart initialized');
+
+        // Resize chart with window resize
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    }
+
+    // 初始化中间主要图表 (市场主要指数表现)
+    function initMainCharts(data) {
+         console.log('Initializing main charts with data (Placeholder):', data);
+        const chartDom = document.getElementById('mainCharts');
+        if (!chartDom) {
+            console.error('Main charts container not found!');
+            return;
+        }
+
+        const myChart = echarts.init(chartDom);
+
+        // Placeholder time-series data for major indices/market indicators
+         const years = ['2016', '2017', '2018', '2019']; 
+        const shanghaiIndex = [3000, 3200, 2800, 3100]; // 模拟上证指数点位
+        const shenzhenIndex = [10000, 11000, 9500, 10500]; // 模拟深证成指点位
+        const chiNextIndex = [1800, 1900, 1600, 1750]; // 模拟创业板指点位
+        const marketVolume = [30, 38, 42, 39]; // 模拟市场总成交量 (亿)
+        const turnoverRate = [1.2, 1.5, 1.1, 1.3]; // 模拟市场换手率 (%)
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            legend: {
+                data: ['上证指数', '深证成指', '创业板指', '总成交量', '换手率'],
+                textStyle: { color: '#fff' }
+            },
+            xAxis: [
+                {
+                    type: 'category',
+                    data: years,
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    axisLabel: { color: '#fff' }
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '指数点位',
+                    axisLabel: {
+                        formatter: '{value}',
+                        color: '#fff'
+                    },
+                    splitLine: { show: false }
+                },
+                {
+                    type: 'value',
+                    name: '成交量(亿)/换手率(%)',
+                    axisLabel: {
+                        formatter: '{value}',
+                         color: '#fff'
+                    },
+                    splitLine: { show: false }
+                }
+            ],
+            series: [
+                {
+                    name: '上证指数',
+                    type: 'bar',
+                    data: shanghaiIndex,
+                     itemStyle: { color: '#00aaff' }
+                },
+                {
+                    name: '深证成指',
+                    type: 'bar',
+                    data: shenzhenIndex,
+                     itemStyle: { color: '#ffaa00' }
+                },
+                 {
+                    name: '创业板指',
+                    type: 'bar',
+                    data: chiNextIndex,
+                     itemStyle: { color: '#00ffaa' }
+                },
+                {
+                    name: '总成交量',
+                    type: 'line',
+                    yAxisIndex: 1, // Use the second Y-axis
+                    data: marketVolume,
+                    itemStyle: { color: '#ffff00' }
+                },
+                 {
+                    name: '换手率',
+                    type: 'line',
+                    yAxisIndex: 1, // Use the second Y-axis
+                    data: turnoverRate,
+                    itemStyle: { color: '#ff00ff' }
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+        console.log('Main charts initialized');
+
+        // Resize chart with window resize
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    }
+
+    // 初始化右侧顶部图表 (原包含表格)
+    function initTopRightChart(data) {
+         console.log('Initializing top right chart with data:', data);
+        const chartDom = document.getElementById('topRightChart');
+        // Remove tableDom as we are removing the table
+        // const tableDom = document.getElementById('topRightTable');
+
+        if (!chartDom) { // Only check for chart container
+            console.error('Top right chart container not found!');
+            return;
+        }
+
+        // --- Initialize Chart ---
+        const chartInstance = echarts.init(chartDom);
+
+        // Using top gainers/losers for the chart
+        const gainers = data.top_gainers || [];
+        const losers = data.top_losers || [];
+
+        // Combine top gainers and losers for display (e.g., top 5 gainers and top 5 losers)
+        const chartData = gainers.slice(0, 5).concat(losers.slice(0, 5));
+        const categories = chartData.map(item => `${item.name} (${item.code})`);
+        const changePercentages = chartData.map(item => item.change_percent);
+        const currentPrices = chartData.map(item => item.current_price);
+
+        const chartOption = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                },
+                 formatter: function (params) {
+                    const item = chartData[params[0].dataIndex];
+                    return `${item.name} (${item.code})<br/>涨跌幅: ${item.change_percent}%<br/>当前价: ${item.current_price}`;
+                }
+            },
+            legend: {
+                 data: ['涨跌幅', '当前价'],
+                textStyle: { color: '#fff' }
+            },
+            xAxis: {
+                type: 'category',
+                data: categories,
+                 axisLabel: { color: '#fff' }
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '涨跌幅(%)',
+                    axisLabel: {
+                         formatter: '{value} %'
+                    },
+                     axisLabel: { color: '#fff' },
+                     splitLine: { show: false }
+                },
+                {
+                    type: 'value',
+                    name: '当前价',
+                     axisLabel: { color: '#fff' },
+                     splitLine: { show: false }
+                }
+            ],
+            series: [
+                {
+                    name: '涨跌幅',
+                    type: 'bar',
+                    data: changePercentages,
+                     yAxisIndex: 0,
+                     itemStyle: { color: function(params) { return params.value >= 0 ? '#ff0000' : '#00ff00'; } } // Red for gain, Green for loss
+                },
+                 {
+                    name: '当前价',
+                    type: 'line', // Use line for current price
+                    yAxisIndex: 1, // Use the second Y-axis
+                    data: currentPrices,
+                     itemStyle: { color: '#ffff00' }
+                }
+            ]
+        };
+
+        chartInstance.setOption(chartOption);
+        console.log('Top right chart initialized');
+
+        // Resize chart with window resize
+        window.addEventListener('resize', function() {
+            chartInstance.resize();
+        });
+
+        // --- Removed Table Initialization ---
+        // console.log('Initializing top right table...');
+        // const tableData = gainers.slice(0, 10).concat(losers.slice(0, 10));
+        // ... (rest of table code removed)
+
+    }
+
+    // 初始化左侧底部条形图 (行业板块表现)
+    function initBottomLeftBarChart(data) {
+         console.log('Initializing bottom left bar chart with data (Placeholder):', data);
+        const chartDom = document.getElementById('bottomLeftBarChart');
+        if (!chartDom) {
+            console.error('Bottom left bar chart container not found!');
+            return;
+        }
+
+        const myChart = echarts.init(chartDom);
+
+        // Placeholder data for industry/sector performance
+        const categories = ['电子', '医药生物', '计算机', '电力设备', '汽车', 'TMT', '食品饮料', '有色金属', '新能源']; 
+        const series1Data = [5, 3, 7, 4, 6, 8, 2, 5, 9]; // 模拟行业涨跌幅 %
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                },
+                 formatter: '{b}<br/>涨跌幅: {c}%'
+            },
+            legend: {
+                data: ['涨跌幅'],
+                textStyle: { color: '#fff' }
+            },
+            xAxis: {
+                type: 'category',
+                data: categories,
+                 axisLabel: { color: '#fff' }
+            },
+            yAxis: {
+                type: 'value',
+                 axisLabel: { color: '#fff', formatter: '{value} %' },
+                 splitLine: { show: false }
+            },
+            series: [
+                {
+                    name: '涨跌幅',
+                    type: 'bar',
+                    data: series1Data,
+                     itemStyle: { 
+                         color: function(params) { // Color based on value
+                             return params.value >= 0 ? '#ff0000' : '#00ff00'; // Red for gain, Green for loss
+                         }
+                     },
+                      label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}%',
+                        color: '#fff'
+                     }
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+        console.log('Bottom left bar chart initialized');
+
+        // Resize chart with window resize
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    }
+
+    // 初始化中间底部折线图 (市场关键指标趋势)
+    function initBottomLineChart(data) {
+         console.log('Initializing bottom line chart with data (Placeholder):', data);
+         const chartDom = document.getElementById('bottomLineChart');
+        if (!chartDom) {
+            console.error('Bottom line chart container not found!');
+            return;
+        }
+         const myChart = echarts.init(chartDom);
+
+        // Placeholder time-series data for market indicators
+        const months = ['17年3月', '17年6月', '17年9月', '17年12月', '18年3月', '18年6月', '18年9月', '18年12月', '19年3月', '19年6月', '19年9月', '19年12月']; 
+        const sentimentIndex = [50, 55, 60, 58, 65, 70, 68, 72, 75, 78, 76, 80]; // 模拟市场情绪指数
+        const pvRatio = [1.5, 1.8, 2.0, 1.9, 2.2, 2.5, 2.3, 2.6, 2.8, 3.0, 2.9, 3.1]; // 模拟市净率
+
+         const option = {
+             tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['市场情绪指数', '市净率'],
+                 textStyle: { color: '#fff' }
+            },
+            xAxis: {
+                type: 'category',
+                data: months,
+                axisLabel: { color: '#fff' }
+            },
+            yAxis: [
+                 {
+                    type: 'value',
+                    name: '指数',
+                     axisLabel: { color: '#fff' },
+                     splitLine: { show: false }
+                 },
+                 {
+                    type: 'value',
+                    name: '比率',
+                     axisLabel: { color: '#fff' },
+                     splitLine: { show: false }
+                 }
+            ],
+            series: [
+                {
+                    name: '市场情绪指数',
+                    type: 'line',
+                    data: sentimentIndex,
+                    smooth: true,
+                    itemStyle: { color: '#ffff00' }
+                },
+                {
+                    name: '市净率',
+                    type: 'line',
+                    data: pvRatio,
+                    smooth: true,
+                    itemStyle: { color: '#ff00ff' },
+                    yAxisIndex: 1 // Use second y-axis
+                }
+            ]
+         };
+
+         myChart.setOption(option);
+         console.log('Bottom line chart initialized');
+
+         window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    }
+
+     // 初始化右侧底部饼图/圆环图
+    function initBottomRightPieChart(data) {
+         console.log('Initializing bottom right pie chart with data:', data);
+         const chartDom = document.getElementById('bottomRightPieChart');
+        if (!chartDom) {
+            console.error('Bottom right pie chart container not found!');
+            return;
+        }
+         const myChart = echarts.init(chartDom);
+
+         // Using market cap distribution for the pie chart
+         const pieData = data.market_cap_distribution ? [
+             { value: data.market_cap_distribution.values[0], name: `小盘股 (${data.market_cap_distribution.labels[0]})` },
+            { value: data.market_cap_distribution.values[1], name: `中盘股 (${data.market_cap_distribution.labels[1]})` },
+            { value: data.market_cap_distribution.values[2], name: `大盘股 (${data.market_cap_distribution.labels[2]})` }
+        ] : [];
+
+         const option = {
+             tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b}: {c} ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                data: pieData.map(item => item.name),
+                 textStyle: { color: '#fff' }
+            },
+            series: [
+                {
+                    name: '市值分布',
+                    type: 'pie',
+                    radius: ['50%', '70%'], // For donut chart
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '20',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: pieData
+                }
+            ],
+             color: ['#ffaa00', '#00baff', '#00ffaa'] // Match colors from image
+         };
+
+         myChart.setOption(option);
+         console.log('Bottom right pie chart initialized');
+
+         window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    }
+
+    // 初始化关键指标
+     function initKeyMetrics(data) {
+        console.log('Initializing key metrics with data:', data);
+        const keyMetricsDom = document.getElementById('keyMetrics');
+        if (!keyMetricsDom) {
+             console.error('Key metrics container not found!');
+            return;
+        }
+
+        // Using key metrics from the API
+        const metrics = [
+            { label: '总市值 (亿)', value: data.key_metrics ? data.key_metrics.total_market_cap : 'N/A' },
+            { label: '总成交量 (万手)', value: data.key_metrics ? data.key_metrics.total_volume : 'N/A' },
+            { label: '上涨家数', value: data.key_metrics ? data.key_metrics.gainers_count : 'N/A' },
+            { label: '下跌家数', value: data.key_metrics ? data.key_metrics.losers_count : 'N/A' },
+             { label: '持平家数', value: data.key_metrics ? data.key_metrics.unchanged_count : 'N/A' }
+        ];
+
+        let metricsHtml = '<div class="row">';
+        metrics.forEach(metric => {
+            metricsHtml += `
+                <div class="col key-metric-item">
+                    <h5>${metric.label}</h5>
+                    <p>${metric.value}</p>
+                </div>
+            `;
+        });
+        metricsHtml += '</div>';
+
+        keyMetricsDom.innerHTML = metricsHtml;
+        console.log('Key metrics initialized');
+     }
+
+    // Function to fetch market overview data
+    async function fetchMarketOverviewData() {
+        console.log('Fetching market overview data...');
+        try {
+            const response = await fetch("{{ url_for('visualization.market_overview') }}");
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log('Market overview data fetched successfully:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching market overview data:', error);
+            return null; // Return null or handle error appropriately
+        }
+    }
+
+    // Initialize charts on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('DOM loaded, fetching and initializing charts...');
+        // Ensure ECharts is loaded before initializing and fetching data
+        if (typeof echarts !== 'undefined') {
+             console.error('ECharts not loaded, waiting...');
+             // Retry initialization after a delay if ECharts is not loaded yet
+             setTimeout(async function() {
+                if (typeof echarts !== 'undefined') {
+                    console.log('ECharts loaded after delay, fetching and initializing charts...');
+                    const marketData = await fetchMarketOverviewData();
+                    if (marketData) {
+                        initLeftBarChart(marketData.top_gainers); // Pass top gainers
+                        initMainCharts(marketData); // Pass data (placeholder mapping)
+                        initTopRightChart(marketData); 
+                        initBottomLeftBarChart(marketData); // Pass data (placeholder mapping)
+                        initBottomLineChart(marketData); // Pass data (placeholder mapping)
+                        initBottomRightPieChart(marketData);
+                        initKeyMetrics(marketData);
+                    }
+                } else {
+                    console.error('ECharts still not loaded after delay!');
+                }
+            }, 1000);
+        } else {
+            console.log('ECharts is ready, fetching and initializing charts...');
+             const marketData = await fetchMarketOverviewData();
+             if (marketData) {
+                initLeftBarChart(marketData.top_gainers); // Pass top gainers
+                initMainCharts(marketData); // Pass data (placeholder mapping)
+                initTopRightChart(marketData); 
+                initBottomLeftBarChart(marketData); // Pass data (placeholder mapping)
+                initBottomLineChart(marketData); // Pass data (placeholder mapping)
+                initBottomRightPieChart(marketData);
+                initKeyMetrics(marketData);
+            } else {
+                 console.error('Failed to load market data, charts will not be initialized with real data.');
+            }
+        }
+    });
+
+</script>
+{% endblock %} 

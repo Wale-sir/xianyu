@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>股票列表</h1>
+    </div>
+
+    <div class="row">
+        {% for stock in stocks %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ stock.name }} ({{ stock.code }})</h5>
+                    <p class="card-text">{{ stock.description }}</p>
+                    <div class="stock-info">
+                        <p class="mb-1">
+                            当前价格: <span class="text-primary">¥{{ "%.2f"|format(stock.current_price) }}</span>
+                        </p>
+                        <p class="mb-1">
+                            涨跌幅: 
+                            <span class="{% if stock.change_percent > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ "%.2f"|format(stock.change_percent) }}%
+                            </span>
+                        </p>
+                        <p class="mb-1">成交量: {{ "{:,}".format(stock.volume) }}</p>
+                        <p class="mb-1">市值: ¥{{ "{:,.2f}".format(stock.market_cap) }}</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group w-100">
+                        <a href="{{ url_for('stock.view', stock_id=stock.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> 查看
+                        </a>
+                        <a href="{{ url_for('visualization.stock_visualization', stock_id=stock.id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-line"></i> 图表
+                        </a>
+                        <a href="{{ url_for('prediction.predict_stock', stock_id=stock.id) }}" class="btn btn-outline-success">
+                            <i class="fas fa-magic"></i> 预测
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">{{ stock.name }} ({{ stock.code }}) 预测分析</h2>
+                <a href="{{ url_for('stock.view', stock_id=stock.id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> 返回股票详情
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="prediction-summary">
+                        <h4>预测结果</h4>
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="card-title mb-0">预测方向</h5>
+                                    <span class="badge {% if prediction.direction == 'up' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ '上涨' if prediction.direction == 'up' else '下跌' }}
+                                    </span>
+                                </div>
+                                <p class="card-text">
+                                    <strong>预测价格:</strong> 
+                                    ¥{{ "%.2f"|format(prediction.predicted_price) }}
+                                </p>
+                                <p class="card-text">
+                                    <strong>置信度:</strong>
+                                    {{ "%.2f"|format(prediction.confidence * 100) }}%
+                                </p>
+                                <p class="card-text">
+                                    <strong>预测时间:</strong>
+                                    {{ prediction.date.strftime('%Y-%m-%d %H:%M:%S') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="prediction-chart">
+                        <h4>预测趋势</h4>
+                        <div id="predictionChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">历史预测准确率</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="accuracyChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    // 获取预测数据并绘制图表
+    fetch("{{ url_for('prediction.get_prediction', stock_id=stock.id) }}")
+        .then(response => response.json())
+        .then(data => {
+            // 绘制预测趋势图
+            const predictionTrace = {
+                x: data.predictions.map(p => p.date),
+                y: data.predictions.map(p => p.predicted_price),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '预测价格',
+                line: {
+                    color: '{{ "green" if prediction.direction == "up" else "red" }}',
+                    width: 2
+                }
+            };
+
+            const predictionLayout = {
+                title: '预测价格趋势',
+                yaxis: {
+                    title: '价格'
+                },
+                xaxis: {
+                    title: '日期'
+                }
+            };
+
+            Plotly.newPlot('predictionChart', [predictionTrace], predictionLayout);
+
+            // 绘制准确率图表
+            const accuracyTrace = {
+                x: data.predictions.map(p => p.date),
+                y: data.predictions.map(p => p.confidence * 100),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '预测准确率',
+                line: {
+                    color: 'blue',
+                    width: 2
+                }
+            };
+
+            const accuracyLayout = {
+                title: '历史预测准确率',
+                yaxis: {
+                    title: '准确率 (%)',
+                    range: [0, 100]
+                },
+                xaxis: {
+                    title: '日期'
+                }
+            };
+
+            Plotly.newPlot('accuracyChart', [accuracyTrace], accuracyLayout);
+        });
+</script>
+{% endblock %} 

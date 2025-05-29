@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}股票图表 - {{ stock.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>{{ stock.name }} ({{ stock.code }})</h2>
+            <p class="text-muted">最后更新: {{ stock.last_updated.strftime('%Y-%m-%d %H:%M:%S') if stock.last_updated else 'N/A' }}</p>
+        </div>
+    </div>
+
+    <!-- 图表容器 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-container">
+                <div id="candlestickChart" style="width: 100%; height: 400px; border: 1px solid #eee;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-container">
+                <div id="volumeChart" style="width: 100%; height: 200px; border: 1px solid #eee;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-container">
+                <div id="indicatorChart" style="width: 100%; height: 200px; border: 1px solid #eee;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+console.log('Stock template scripts loaded');
+
+// 生成测试数据
+function generateTestData() {
+    console.log('Generating test data...');
+    const data = [];
+    const basePrice = 100;
+    const baseVolume = 1000000;
+    const today = new Date();
+    
+    for (let i = 30; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const open = basePrice + Math.random() * 10 - 5;
+        const close = open + Math.random() * 10 - 5;
+        const high = Math.max(open, close) + Math.random() * 5;
+        const low = Math.min(open, close) - Math.random() * 5;
+        const volume = baseVolume + Math.random() * 500000;
+        
+        data.push({
+            date: dateStr,
+            open: open.toFixed(2),
+            high: high.toFixed(2),
+            low: low.toFixed(2),
+            close: close.toFixed(2),
+            volume: Math.round(volume)
+        });
+    }
+    console.log('Test data generated:', data);
+    return data;
+}
+
+// 初始化图表
+function initCharts() {
+    console.log('Initializing charts...');
+    
+    // 检查 ECharts 是否可用
+    if (typeof echarts === 'undefined') {
+        console.error('ECharts is not loaded!');
+        return;
+    }
+    
+    // 检查容器是否存在
+    const candlestickContainer = document.getElementById('candlestickChart');
+    const volumeContainer = document.getElementById('volumeChart');
+    const indicatorContainer = document.getElementById('indicatorChart');
+    
+    console.log('Chart containers:', {
+        candlestick: candlestickContainer,
+        volume: volumeContainer,
+        indicator: indicatorContainer
+    });
+    
+    if (!candlestickContainer || !volumeContainer || !indicatorContainer) {
+        console.error('Chart containers not found!');
+        return;
+    }
+    
+    // 生成测试数据
+    const testData = generateTestData();
+    
+    try {
+        // 初始化 K 线图
+        console.log('Initializing candlestick chart...');
+        const candlestickChart = echarts.init(candlestickContainer);
+        const candlestickOption = {
+            title: {
+                text: 'K线图'
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross'
+                }
+            },
+            xAxis: {
+                type: 'category',
+                data: testData.map(item => item.date)
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                type: 'candlestick',
+                data: testData.map(item => [
+                    item.open,
+                    item.close,
+                    item.low,
+                    item.high
+                ])
+            }]
+        };
+        candlestickChart.setOption(candlestickOption);
+        console.log('Candlestick chart initialized successfully');
+        
+        // 初始化成交量图
+        console.log('Initializing volume chart...');
+        const volumeChart = echarts.init(volumeContainer);
+        const volumeOption = {
+            title: {
+                text: '成交量'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                data: testData.map(item => item.date)
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                type: 'bar',
+                data: testData.map(item => item.volume)
+            }]
+        };
+        volumeChart.setOption(volumeOption);
+        console.log('Volume chart initialized successfully');
+        
+        // 初始化技术指标图
+        console.log('Initializing indicator chart...');
+        const indicatorChart = echarts.init(indicatorContainer);
+        const indicatorOption = {
+            title: {
+                text: '技术指标'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                data: testData.map(item => item.date)
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                name: 'MA5',
+                type: 'line',
+                data: testData.map((item, index) => {
+                    if (index < 4) return null;
+                    const sum = testData.slice(index - 4, index + 1).reduce((acc, curr) => acc + parseFloat(curr.close), 0);
+                    return (sum / 5).toFixed(2);
+                })
+            }]
+        };
+        indicatorChart.setOption(indicatorOption);
+        console.log('Indicator chart initialized successfully');
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', function() {
+            console.log('Window resized, updating charts...');
+            candlestickChart.resize();
+            volumeChart.resize();
+            indicatorChart.resize();
+        });
+    } catch (error) {
+        console.error('Error initializing charts:', error);
+    }
+}
+
+// 页面加载完成后初始化图表
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, waiting for ECharts...');
+    // 确保 ECharts 加载完成
+    if (typeof echarts !== 'undefined') {
+        console.log('ECharts is ready, initializing charts...');
+        initCharts();
+    } else {
+        console.error('ECharts not loaded, waiting...');
+        // 如果 ECharts 还没加载完成，等待一段时间后重试
+        setTimeout(function() {
+            if (typeof echarts !== 'undefined') {
+                console.log('ECharts loaded after delay, initializing charts...');
+                initCharts();
+            } else {
+                console.error('ECharts still not loaded after delay!');
+            }
+        }, 1000);
+    }
+});
+</script>
+{% endblock %} 

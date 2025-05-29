@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">{{ share.title }}</h2>
+                {% if current_user.is_authenticated and current_user.id == share.user_id %}
+                <div class="btn-group">
+                    <a href="{{ url_for('share.edit', share_id=share.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="mt-2">
+                <small class="text-muted">
+                    作者: {{ user.username }} | 
+                    发布时间: {{ share.created_at.strftime('%Y-%m-%d %H:%M') }} |
+                    股票: {{ stock.name }} ({{ stock.code }})
+                </small>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="share-content mb-4">
+                {{ share.content }}
+            </div>
+            
+            {% if share.images %}
+            <div class="share-images mb-4">
+                <div class="row">
+                    {% for image in share.images %}
+                    <div class="col-md-4 mb-3">
+                        <img src="{{ url_for('static', filename=image) }}" class="img-fluid rounded" alt="分享图片">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="share-actions mb-4">
+                {% if current_user.is_authenticated %}
+                <button class="btn btn-outline-danger like-btn" data-share-id="{{ share.id }}">
+                    <i class="fas fa-heart"></i> 点赞 <span class="likes-count">{{ share.likes }}</span>
+                </button>
+                {% endif %}
+            </div>
+            
+            <div class="share-comments">
+                <h4>评论 ({{ share.comments|length }})</h4>
+                {% if current_user.is_authenticated %}
+                <form class="mb-4" id="commentForm">
+                    <div class="mb-3">
+                        <textarea class="form-control" id="commentContent" rows="3" placeholder="写下你的评论..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">发表评论</button>
+                </form>
+                {% endif %}
+                
+                <div class="comments-list">
+                    {% for comment in share.comments %}
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    {{ comment.user_id }} <!-- 这里需要显示用户名 -->
+                                </h6>
+                                <small class="text-muted">
+                                    {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                            <p class="card-text">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除这条分享吗？此操作不可恢复。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form action="{{ url_for('share.delete', share_id=share.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 点赞功能
+    const likeBtn = document.querySelector('.like-btn');
+    if (likeBtn) {
+        likeBtn.addEventListener('click', function() {
+            const shareId = this.dataset.shareId;
+            fetch(`/shares/${shareId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('.likes-count').textContent = data.likes;
+            });
+        });
+    }
+    
+    // 评论功能
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const content = document.getElementById('commentContent').value;
+            const shareId = '{{ share.id }}';
+            
+            fetch(`/shares/${shareId}/comment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `content=${encodeURIComponent(content)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

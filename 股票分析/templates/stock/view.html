@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">{{ stock.name }} ({{ stock.code }})</h2>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>基本信息</h4>
+                    <p class="mb-2">{{ stock.description }}</p>
+                    <div class="stock-info">
+                        <p class="mb-2">
+                            <strong>当前价格:</strong>
+                            <span class="text-primary">¥{{ "%.2f"|format(stock.current_price) }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>涨跌幅:</strong>
+                            <span class="{% if stock.change_percent > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ "%.2f"|format(stock.change_percent) }}%
+                            </span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>成交量:</strong>
+                            {{ "{:,}".format(stock.volume) }}
+                        </p>
+                        <p class="mb-2">
+                            <strong>市值:</strong>
+                            ¥{{ "{:,.2f}".format(stock.market_cap) }}
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h4>技术分析</h4>
+                    <div id="stockChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="btn-group">
+                <a href="{{ url_for('visualization.stock_visualization', stock_id=stock.id) }}" class="btn btn-info">
+                    <i class="fas fa-chart-line"></i> 详细图表
+                </a>
+                <a href="{{ url_for('prediction.predict_stock', stock_id=stock.id) }}" class="btn btn-success">
+                    <i class="fas fa-magic"></i> 预测分析
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    // 获取股票数据并绘制图表
+    fetch("{{ url_for('visualization.get_stock_data', stock_id=stock.id) }}")
+        .then(response => response.json())
+        .then(data => {
+            const trace = {
+                x: data.history.map(h => h.date),
+                close: data.history.map(h => h.close),
+                high: data.history.map(h => h.high),
+                low: data.history.map(h => h.low),
+                open: data.history.map(h => h.open),
+                type: 'candlestick',
+                name: '{{ stock.code }}'
+            };
+
+            const layout = {
+                title: '{{ stock.name }} 股票走势',
+                yaxis: {
+                    title: '价格',
+                    autorange: true,
+                    fixedrange: false
+                },
+                xaxis: {
+                    title: '日期',
+                    rangeslider: {
+                        visible: false
+                    }
+                }
+            };
+
+            Plotly.newPlot('stockChart', [trace], layout);
+        });
+</script>
+{% endblock %}
+{% endblock %} 

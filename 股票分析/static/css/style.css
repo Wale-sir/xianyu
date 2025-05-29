@@ -1,0 +1,87 @@
+/* 全局样式 */
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* 导航栏样式 */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* 表格样式 */
+.table {
+    background-color: #fff;
+}
+
+.table thead th {
+    border-top: none;
+    background-color: #f8f9fa;
+}
+
+/* 图表容器样式 */
+.chart-container {
+    height: 400px;
+    margin-bottom: 20px;
+}
+
+/* 错误页面样式 */
+.error-container {
+    text-align: center;
+    padding: 50px 0;
+}
+
+.error-container h1 {
+    font-size: 72px;
+    color: #dc3545;
+}
+
+/* 表单样式 */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* 警告消息样式 */
+.alert {
+    border: none;
+    border-radius: 4px;
+}
+
+/* 加载动画样式 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,.1);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+} 

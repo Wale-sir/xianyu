@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">编辑股票信息</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('stock.edit', stock_id=stock.id) }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            <label for="code" class="form-label">股票代码</label>
+                            <input type="text" class="form-control" id="code" name="code" value="{{ stock.code }}" readonly>
+                            <div class="form-text">股票代码不可修改</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">股票名称</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ stock.name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">股票描述</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ stock.description }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="current_price" class="form-label">当前价格</label>
+                            <div class="input-group">
+                                <span class="input-group-text">¥</span>
+                                <input type="number" class="form-control" id="current_price" name="current_price" step="0.01" value="{{ stock.current_price }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="change_percent" class="form-label">涨跌幅</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="change_percent" name="change_percent" step="0.01" value="{{ stock.change_percent }}" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="volume" class="form-label">成交量</label>
+                            <input type="number" class="form-control" id="volume" name="volume" value="{{ stock.volume }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="market_cap" class="form-label">市值</label>
+                            <div class="input-group">
+                                <span class="input-group-text">¥</span>
+                                <input type="number" class="form-control" id="market_cap" name="market_cap" step="0.01" value="{{ stock.market_cap }}" required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                            <a href="{{ url_for('stock.view', stock_id=stock.id) }}" class="btn btn-secondary">取消</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-container">
+    <h1>{{ error.code }}</h1>
+    <p class="lead">{{ error.description }}</p>
+    <a href="{{ url_for('stock.index') }}" class="btn btn-primary">返回首页</a>
+</div>
+{% endblock %} 

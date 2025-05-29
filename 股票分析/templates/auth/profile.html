@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- 左侧个人信息 -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3>{{ profile_user.username }}</h3>
+                    <div class="d-flex justify-content-center gap-3 mt-3">
+                        <div>
+                            <h5>{{ followers_count }}</h5>
+                            <small class="text-muted">粉丝</small>
+                        </div>
+                        <div>
+                            <h5>{{ following_count }}</h5>
+                            <small class="text-muted">关注</small>
+                        </div>
+                    </div>
+                    {% if current_user.id != profile_user.id %}
+                        {% if is_following %}
+                        <form action="{{ url_for('social.unfollow', user_id=profile_user.id) }}" method="POST" class="mt-3">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-user-minus"></i> 取消关注
+                            </button>
+                        </form>
+                        {% else %}
+                        <form action="{{ url_for('social.follow', user_id=profile_user.id) }}" method="POST" class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> 关注
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧个人信息表单 -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>个人资料</h3>
+                </div>
+                <div class="card-body">
+                    {% if current_user.id == profile_user.id %}
+                    <form method="POST" action="{{ url_for('auth.profile') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ current_user.username }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">当前密码（修改密码时填写）</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="text-center">
+                        <p class="text-muted">这是 {{ profile_user.username }} 的个人资料页面</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 关注列表 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>关注列表</h3>
+                </div>
+                <div class="card-body">
+                    {% if following %}
+                        <div class="list-group">
+                            {% for user in following %}
+                            <a href="{{ url_for('auth.profile', user_id=user.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ user.username }}</h5>
+                                    <small class="text-muted">关注于 {{ user.created_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">还没有关注任何人</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 粉丝列表 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>粉丝列表</h3>
+                </div>
+                <div class="card-body">
+                    {% if followers %}
+                        <div class="list-group">
+                            {% for user in followers %}
+                            <a href="{{ url_for('auth.profile', user_id=user.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ user.username }}</h5>
+                                    <small class="text-muted">关注于 {{ user.created_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">还没有粉丝</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
