@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>编辑美食</h2>
+    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {{ form.csrf_token }}
+        <div class="mb-3">
+            <label for="name" class="form-label">名称</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ food.name }}" required minlength="2" maxlength="50">
+            <div class="invalid-feedback">
+                请输入2-50个字符的名称
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">描述</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required minlength="10" maxlength="500">{{ food.description }}</textarea>
+            <div class="invalid-feedback">
+                请输入10-500个字符的描述
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">价格</label>
+            <input type="number" class="form-control" id="price" name="price" value="{{ food.price }}" step="0.01" min="0" required>
+            <div class="invalid-feedback">
+                请输入有效的价格（大于等于0）
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="image" class="form-label">图片</label>
+            {% if food.image %}
+            <div class="mb-2">
+                <img src="{{ url_for('media.get_file', file_id=food.image) }}" alt="当前图片" class="img-thumbnail" style="max-width: 200px;">
+            </div>
+            {% endif %}
+            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+            <div class="form-text">如果不选择新图片，将保持当前图片不变</div>
+        </div>
+        <button type="submit" class="btn btn-primary">保存修改</button>
+        <a href="{{ url_for('food.detail', food_id=food.id) }}" class="btn btn-secondary">取消</a>
+    </form>
+</div>
+
+<script>
+// 表单验证
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %} 

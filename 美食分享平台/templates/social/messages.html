@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>我的消息</h2>
+    <div class="list-group mt-3">
+        {% for conv in conversations %}
+        <a href="{{ url_for('social.conversation', user_id=conv.user.id) }}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ conv.user.username }}</h5>
+                {% if conv.unread_count > 0 %}
+                <span class="badge bg-primary rounded-pill">{{ conv.unread_count }}</span>
+                {% endif %}
+            </div>
+            <p class="mb-1 text-truncate">{{ conv.last_message }}</p>
+        </a>
+        {% else %}
+        <div class="alert alert-info">暂无消息</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

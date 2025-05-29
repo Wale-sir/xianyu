@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">与 {{ other_user.username }} 的对话</h5>
+            <a href="{{ url_for('social.messages') }}" class="btn btn-outline-secondary btn-sm">返回消息列表</a>
+        </div>
+        <div class="card-body" style="height: 400px; overflow-y: auto;" id="messageContainer">
+            {% for message in messages %}
+            <div class="mb-3 {% if message.sender_id == current_user.id %}text-end{% endif %}">
+                <div class="d-inline-block p-2 rounded {% if message.sender_id == current_user.id %}bg-primary text-white{% else %}bg-light{% endif %}" style="max-width: 70%;">
+                    {{ message.content }}
+                </div>
+                <div class="small text-muted mt-1">
+                    {{ message.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center text-muted">
+                暂无消息记录，开始对话吧！
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card-footer">
+            <form action="{{ url_for('social.conversation', user_id=other_user.id) }}" method="POST">
+                <div class="input-group">
+                    <input type="text" name="content" class="form-control" placeholder="输入消息..." required>
+                    <button type="submit" class="btn btn-primary">发送</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // 页面加载完成后滚动到底部
+    document.addEventListener('DOMContentLoaded', function() {
+        var messageContainer = document.getElementById('messageContainer');
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    });
+</script>
+{% endblock %}
+
+{% endblock %} 

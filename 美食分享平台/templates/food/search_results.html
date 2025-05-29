@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>搜索结果: "{{ query }}"</h1>
+    
+    {% if foods %}
+    <div class="row">
+        {% for food in foods %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                {% if food.image %}
+                <img src="{{ url_for('media.get_file', file_id=food.image) }}" class="card-img-top" alt="{{ food.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ food.name }}</h5>
+                    <p class="card-text">{{ food.description }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">价格: ¥{{ food.price }}</small>
+                    </p>
+                    <a href="{{ url_for('food.detail', food_id=food.id) }}" class="btn btn-primary">查看详情</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        没有找到与 "{{ query }}" 相关的美食。
+    </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{{ url_for('food.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回首页
+        </a>
+    </div>
+</div>
+{% endblock %} 

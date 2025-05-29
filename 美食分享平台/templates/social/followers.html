@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>我的粉丝</h2>
+    <div class="row">
+        {% for follower in followers %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ follower.username }}</h5>
+                    <p class="card-text">关注时间：{{ follower.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <a href="{{ url_for('auth.profile', user_id=follower.id) }}" class="btn btn-primary">查看主页</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">暂无粉丝</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

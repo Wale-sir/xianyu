@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 顶部导航 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('food.index') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="me-2" style="height: 40px;">
+            <span class="brand-text">美食社区</span>
+        </a>
+        <div class="d-flex align-items-center flex-grow-1 mx-4">
+            <div class="input-group">
+                <input type="text" id="searchInput" class="form-control border-end-0" 
+                       placeholder="搜索美食..." aria-label="搜索美食">
+                <button class="btn btn-primary" type="button" id="searchButton">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <!-- 搜索建议 -->
+            <div id="searchSuggestions" class="list-group position-absolute w-100 shadow-sm" 
+                 style="display: none; z-index: 1000; margin-top: 5px; top: 100%;">
+            </div>
+        </div>
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('food.create') }}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-plus me-1"></i>发布
+            </a>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-primary">
+                <i class="fas fa-user me-1"></i>{{ current_user.username }}
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">
+                <i class="fas fa-user me-1"></i>登录
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- 标语区域 -->
+<div class="slogan-section text-center py-5">
+    <div class="container">
+        <h1 class="display-4 text-white mb-3">记得按时吃饭</h1>
+        <p class="lead text-white-50">发现美食，分享生活</p>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-3 main-content">
+    <!-- 热门搜索 -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-fire text-danger fa-lg"></i>
+                <span class="text-muted">热门搜索：</span>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if popular_searches %}
+                        {% for search in popular_searches %}
+                        <a href="{{ url_for('food.search', q=search._id) }}" 
+                           class="text-decoration-none text-muted hover-primary">
+                            {{ search._id }}
+                            <small class="text-danger">({{ search.count }})</small>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-muted">暂无热门搜索</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 美食列表 -->
+    <div class="row g-3">
+        {% for food in foods %}
+        <div class="col-md-3 col-lg-2">
+            <a href="{{ url_for('food.detail', food_id=food.id) }}" class="text-decoration-none">
+                <div class="card border-0 hover-shadow transition-all">
+                    {% if food.image %}
+                    <div class="position-relative">
+                        <img src="{{ url_for('media.get_file', file_id=food.image) }}" 
+                             class="card-img-top" alt="{{ food.name }}"
+                             style="height: 160px; object-fit: cover;">
+                        <div class="position-absolute bottom-0 end-0 p-2">
+                            <span class="badge bg-primary">¥{{ food.price }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="card-body p-2">
+                        <h6 class="card-title mb-1 text-truncate text-dark">{{ food.name }}</h6>
+                        <p class="card-text small text-muted mb-1 text-truncate">{{ food.description }}</p>
+                        <div class="d-flex align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-eye me-1"></i>1.2k
+                            </small>
+                            <small class="text-muted ms-2">
+                                <i class="fas fa-heart me-1"></i>328
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 分页 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('food.index', page=page-1) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, (total // per_page) + 2) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('food.index', page=p) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if page < (total // per_page) + 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('food.index', page=page+1) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- 自定义样式 -->
+<style>
+body {
+    background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%);
+    z-index: -1;
+}
+
+.slogan-section {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.slogan-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center;
+    background-size: cover;
+    opacity: 0.3;
+    z-index: -1;
+}
+
+.main-content {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.brand-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+.transition-all {
+    transition: all 0.3s ease;
+}
+.card {
+    transition: all 0.3s ease;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+.hover-primary:hover {
+    color: var(--bs-primary) !important;
+}
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+}
+.btn-outline-primary {
+    border-width: 2px;
+    border-radius: 8px;
+}
+.btn-outline-primary:hover {
+    transform: translateY(-1px);
+}
+.form-control {
+    border-radius: 8px;
+}
+.form-control:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+}
+.badge {
+    font-size: 0.75rem;
+    padding: 0.5em 0.8em;
+    border-radius: 6px;
+}
+.pagination .page-link {
+    border-radius: 6px;
+    margin: 0 2px;
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+.fa-lg {
+    font-size: 1.2em;
+}
+.card-img-top {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+/* 添加动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slogan-section h1 {
+    animation: fadeIn 1s ease-out;
+}
+
+.slogan-section p {
+    animation: fadeIn 1s ease-out 0.3s backwards;
+}
+
+.card {
+    animation: fadeIn 0.5s ease-out backwards;
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(5) { animation-delay: 0.5s; }
+.card:nth-child(6) { animation-delay: 0.6s; }
+</style>
+
+<!-- 搜索相关的 JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    let searchTimeout;
+
+    // 搜索按钮点击事件
+    searchButton.addEventListener('click', function() {
+        const query = searchInput.value.trim();
+        if (query) {
+            window.location.href = "{{ url_for('food.search') }}?q=" + encodeURIComponent(query);
+        }
+    });
+
+    // 输入框回车事件
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (query) {
+                window.location.href = "{{ url_for('food.search') }}?q=" + encodeURIComponent(query);
+            }
+        }
+    });
+
+    // 输入框输入事件 - 获取搜索建议
+    searchInput.addEventListener('input', function() {
+        const query = searchInput.value.trim();
+        
+        // 清除之前的定时器
+        clearTimeout(searchTimeout);
+        
+        if (query.length > 0) {
+            // 设置新的定时器，延迟 300ms 发送请求
+            searchTimeout = setTimeout(() => {
+                fetch("{{ url_for('food.search') }}?q=" + encodeURIComponent(query), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 显示搜索建议
+                        searchSuggestions.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(food => {
+                                const item = document.createElement('a');
+                                item.href = "{{ url_for('food.detail', food_id='') }}" + food._id;
+                                item.className = 'list-group-item list-group-item-action p-2';
+                                item.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">${food.name}</h6>
+                                            <small class="text-primary">¥${food.price}</small>
+                                        </div>
+                                        <small class="text-muted">${food.description.substring(0, 30)}...</small>
+                                    </div>
+                                `;
+                                searchSuggestions.appendChild(item);
+                            });
+                            searchSuggestions.style.display = 'block';
+                        } else {
+                            searchSuggestions.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        searchSuggestions.style.display = 'none';
+                    });
+            }, 300);
+        } else {
+            searchSuggestions.style.display = 'none';
+        }
+    });
+
+    // 点击页面其他地方时隐藏搜索建议
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+            searchSuggestions.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %} 
