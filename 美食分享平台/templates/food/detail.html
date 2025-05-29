@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="detail-page">
+    <div class="container py-5">
+    <div class="row">
+            <!-- 左侧图片区域 -->
+            <div class="col-lg-6 mb-4">
+                <div class="image-container">
+            {% if food.image %}
+                    <img src="{{ url_for('media.get_file', file_id=food.image) }}" 
+                         class="food-image" alt="{{ food.name }}">
+            {% else %}
+                    <div class="no-image">
+                        <i class="fas fa-image fa-3x"></i>
+                        <p>暂无图片</p>
+            </div>
+            {% endif %}
+                </div>
+            </div>
+            
+            <!-- 右侧信息区域 -->
+            <div class="col-lg-6">
+                <div class="info-card">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <h1 class="food-title">{{ food.name }}</h1>
+                        <div class="price-tag">
+                            <span class="price">¥{{ food.price }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="description-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-align-left me-2"></i>美食描述
+                        </h5>
+                        <p class="description">{{ food.description }}</p>
+        </div>
+        
+                    <div class="author-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-user me-2"></i>发布者
+                        </h5>
+                        <div class="author-info">
+                            <a href="{{ url_for('auth.profile', user_id=food.user_id) }}" class="author-link">
+                                <i class="fas fa-user-circle me-2"></i>
+                                {{ food.username }}
+                            </a>
+                            {% if current_user.is_authenticated and current_user.id != food.user_id %}
+                            <form method="POST" action="{{ url_for('social.follow', user_id=food.user_id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm {% if is_following %}btn-secondary{% else %}btn-primary{% endif %}">
+                                    {% if is_following %}已关注{% else %}关注{% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if current_user.is_authenticated and current_user.id == food.user_id %}
+                    <div class="action-buttons">
+                        <a href="{{ url_for('food.edit', food_id=food.id) }}" class="btn btn-primary me-2">
+                            <i class="fas fa-edit me-1"></i>编辑
+                        </a>
+                        <form method="POST" action="{{ url_for('food.delete', food_id=food.id) }}" class="d-inline" onsubmit="return confirm('确定要删除这个美食吗？');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除这个美食吗？')">
+                                <i class="fas fa-trash-alt me-1"></i>删除
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 评论区 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="comments-card">
+                    <h3 class="section-title mb-4">
+                        <i class="fas fa-comments me-2"></i>评论区
+                    </h3>
+                    
+                    {% if current_user.is_authenticated %}
+                    <form method="POST" action="{{ url_for('food.add_review', food_id=food.id) }}" class="comment-form mb-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">评分</label>
+                            <div class="rating-input">
+                                {% for i in range(5) %}
+                                <input type="radio" name="rating" value="{{ i + 1 }}" id="star{{ i + 1 }}" required>
+                                <label for="star{{ i + 1 }}"><i class="fas fa-star"></i></label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">评论</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>发表评论
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        请<a href="{{ url_for('auth.login') }}" class="alert-link">登录</a>后发表评论
+                    </div>
+                    {% endif %}
+                    
+                    <div class="comments-list">
+                        {% for review in food.reviews %}
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <div class="comment-author">
+                                    <i class="fas fa-user-circle me-2"></i>
+                                    {{ review.username }}
+                                </div>
+                                <div class="comment-rating">
+                                    {% for i in range(5) %}
+                                    <i class="fas fa-star {% if i < review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="comment-content">
+                                {{ review.comment }}
+                            </div>
+                            <div class="comment-time">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ review.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="no-comments">
+                            <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                            <p>暂无评论</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.detail-page {
+    min-height: 100vh;
+    background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+.detail-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%);
+    z-index: 0;
+}
+
+.image-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.5s ease-out;
+}
+
+.food-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 15px;
+}
+
+.no-image {
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 15px;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.5s ease-out 0.2s backwards;
+}
+
+.food-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.price-tag {
+    background: linear-gradient(45deg, #4a90e2, #5cb3ff);
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.section-title {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.description {
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+}
+
+.author-link {
+    color: #4a90e2;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.author-link:hover {
+    color: #2c3e50;
+}
+
+.comments-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.5s ease-out 0.4s backwards;
+}
+
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-input label {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #dee2e6;
+    padding: 0 0.1rem;
+    transition: color 0.3s ease;
+}
+
+.rating-input input:checked ~ label,
+.rating-input label:hover,
+.rating-input label:hover ~ label {
+    color: #ffc107;
+}
+
+.comment-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-author {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.comment-content {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.comment-time {
+    font-size: 0.875rem;
+    color: #adb5bd;
+}
+
+.no-comments {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #4a90e2, #5cb3ff);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+}
+
+.btn-danger {
+    background: #ff6b6b;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: #ff5252;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 评分星星的交互效果
+    const ratingInputs = document.querySelectorAll('.rating-input input');
+    const ratingLabels = document.querySelectorAll('.rating-input label');
+    
+    ratingLabels.forEach(label => {
+        label.addEventListener('mouseover', function() {
+            const rating = this.getAttribute('for').replace('star', '');
+            updateStars(rating);
+        });
+        
+        label.addEventListener('mouseout', function() {
+            const checkedInput = document.querySelector('.rating-input input:checked');
+            if (checkedInput) {
+                const rating = checkedInput.value;
+                updateStars(rating);
+            } else {
+                updateStars(0);
+            }
+        });
+    });
+    
+    function updateStars(rating) {
+        ratingLabels.forEach((label, index) => {
+            if (index < rating) {
+                label.style.color = '#ffc107';
+            } else {
+                label.style.color = '#dee2e6';
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 
